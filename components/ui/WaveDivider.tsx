@@ -5,28 +5,31 @@ import { useReducedMotion } from 'framer-motion'
 
 const WAVE_CONFIG = [
   {
-    opacity:   0.18,
+    opacity:   0.45,
     color:     '180, 180, 200',
-    blur:      '1.5px',
-    duration:  8000,
-    amplitude: 32,
-    offsetY:   0.35,
-  },
-  {
-    opacity:   0.10,
-    color:     '200, 200, 220',
-    blur:      '2px',
-    duration:  11000,
-    amplitude: 24,
-    offsetY:   0.55,
-  },
-  {
-    opacity:   0.06,
-    color:     '160, 160, 180',
     blur:      '1px',
+    duration:  8000,
+    amplitude: 40,
+    offsetY:   0.35,
+    lineWidth: 1.2,
+  },
+  {
+    opacity:   0.28,
+    color:     '200, 200, 220',
+    blur:      '1px',
+    duration:  11000,
+    amplitude: 30,
+    offsetY:   0.55,
+    lineWidth: 0.8,
+  },
+  {
+    opacity:   0.18,
+    color:     '160, 160, 180',
+    blur:      '0.5px',
     duration:  14000,
-    amplitude: 18,
+    amplitude: 22,
     offsetY:   0.45,
+    lineWidth: 0.6,
   },
 ]
 
@@ -75,7 +78,7 @@ export function WaveDivider() {
         ctx.moveTo(-20, baseY)
         ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, W + 20, baseY)
         ctx.strokeStyle = `rgba(${wave.color}, ${wave.opacity})`
-        ctx.lineWidth   = 1
+        ctx.lineWidth   = wave.lineWidth
         ctx.filter      = `blur(${wave.blur})`
         ctx.stroke()
         ctx.filter      = 'none'
