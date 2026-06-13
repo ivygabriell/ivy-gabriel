@@ -1,9 +1,19 @@
+import { Hero } from '@/components/sections/Hero'
+import { StackSection } from '@/components/sections/StackSection'
+import { WorkPreview } from '@/components/sections/WorkPreview'
+import { Reconhecimentos } from '@/components/sections/Reconhecimentos'
+import { PontoDeVista } from '@/components/sections/PontoDeVista'
+import { ContactCTA } from '@/components/sections/ContactCTA'
+
 export default function Home() {
   return (
-    <main className="min-h-screen bg-void">
-      <p className="font-display text-chrome p-8">
-        Ivy Gabriel — em construção
-      </p>
-    </main>
+    <>
+      <Hero />
+      <StackSection />
+      <WorkPreview />
+      <Reconhecimentos />
+      <PontoDeVista />
+      <ContactCTA />
+    </>
   )
 }

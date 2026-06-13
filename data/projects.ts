@@ -24,7 +24,7 @@ export type ProjectType =
 export type ProjectStatus = 'completed' | 'in-progress'
 
 export interface Project {
-  id: string              // slug da URL: /trabalho/[id]
+  id: string              // slug da URL: /projetos/[id]
   title: string           // nome do projeto
   tagline: string         // descrição em uma linha
   type: ProjectType
