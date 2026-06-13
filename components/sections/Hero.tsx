@@ -184,46 +184,56 @@ export function Hero() {
             o negócio.
           </motion.p>
 
-          {/* CTAs */}
+          {/* CTAs + Sociais */}
           <motion.div
-            {...contentEnter(2)}
-            className="flex flex-wrap items-center gap-4"
+            className="flex items-center gap-6 flex-wrap"
+            initial={reduced ? {} : { opacity: 0, y: 10 }}
+            animate={
+              contentVisible
+                ? { opacity: 1, y: 0 }
+                : { opacity: 0, y: 10 }
+            }
+            transition={{
+              duration: reduced ? 0 : 0.7,
+              delay:    reduced ? 0 : 0.30,
+              ease:     EASE,
+            }}
           >
+            {/* Botão */}
             <Link
               href="/projetos"
-              className="border border-silver px-8 py-3.5 font-mono text-[12px] tracking-[0.1em] text-silver transition-all duration-300 hover:border-chrome hover:text-chrome"
+              className="border border-silver px-8 py-3.5 font-mono text-[12px] tracking-[0.1em] text-silver hover:border-chrome hover:text-chrome transition-all duration-300 flex-shrink-0"
             >
               Ver Projetos →
             </Link>
 
-          </motion.div>
+            {/* Separador vertical */}
+            <div className="w-px h-5 bg-border flex-shrink-0" />
 
-          {/* Sociais */}
-          <motion.div
-            {...contentEnter(3)}
-            className="flex items-center gap-5"
-          >
-            {socialLinks.map((social) => (
-              <Link
-                key={social.label}
-                href={social.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={social.label}
-                className="text-text-secondary transition-colors duration-300 hover:text-silver"
-              >
-                <svg
-                  role="img"
-                  viewBox="0 0 24 24"
-                  width={18}
-                  height={18}
-                  fill="currentColor"
-                  aria-hidden="true"
+            {/* Ícones sociais */}
+            <div className="flex items-center gap-4">
+              {socialLinks.map((social) => (
+                <Link
+                  key={social.label}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={social.label}
+                  className="text-text-secondary hover:text-silver transition-colors duration-300"
                 >
-                  <path d={social.path} />
-                </svg>
-              </Link>
-            ))}
+                  <svg
+                    role="img"
+                    viewBox="0 0 24 24"
+                    width={18}
+                    height={18}
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path d={social.path} />
+                  </svg>
+                </Link>
+              ))}
+            </div>
           </motion.div>
         </div>
       </div>
