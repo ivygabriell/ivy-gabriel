@@ -15,6 +15,10 @@ const LINE_WIDTH = 0.4 // espessura das linhas
 const DOT_RADIUS = 1.2 // raio dos pontos nas interseções
 const DOT_OPACITY = 0.18 // opacidade dos pontos
 
+const SYMBOL = '</>'
+const SYMBOL_OPACITY = 0.055
+const SYMBOL_SCALE = 0.30 // 30% da altura do canvas
+
 interface VPoint {
   bx: number // posição base x
   by: number // posição base y
@@ -30,6 +34,7 @@ export function VoronoiBackground() {
   const animRef = useRef<number>(0)
   const mouseRef = useRef({ x: -9999, y: -9999 })
   const pointsRef = useRef<VPoint[]>([])
+  const symbolPosRef = useRef({ x: 0, y: 0, size: 0 })
   const reduceMotion = useReducedMotion()
 
   useEffect(() => {
@@ -66,6 +71,15 @@ export function VoronoiBackground() {
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
     }
 
+    // Posição única — calculada uma vez, recalculada no resize
+    const initSymbolPos = () => {
+      symbolPosRef.current = {
+        x: w * 0.68,
+        y: h * 0.50,
+        size: Math.floor(h * SYMBOL_SCALE),
+      }
+    }
+
     const initPoints = () => {
       points.length = 0
       for (let i = 0; i < count; i++) {
@@ -87,9 +101,19 @@ export function VoronoiBackground() {
       ctx.fillStyle = 'rgba(8, 8, 8, 0.35)'
       ctx.fillRect(0, 0, w, h)
 
+      // 2. </> grande estático — atrás do Voronoi
+      const { x: sx, y: sy, size: sSize } = symbolPosRef.current
+      ctx.save()
+      ctx.font = `bold ${sSize}px "JetBrains Mono", monospace`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillStyle = `rgba(180, 180, 180, ${SYMBOL_OPACITY})`
+      ctx.fillText(SYMBOL, sx, sy)
+      ctx.restore()
+
       const mouse = mouseRef.current
 
-      // 2. Atualizar posição de cada ponto
+      // 3. Atualizar posição de cada ponto
       points.forEach((p) => {
         const dx = p.cx - mouse.x
         const dy = p.cy - mouse.y
@@ -119,7 +143,7 @@ export function VoronoiBackground() {
         }
       })
 
-      // 3. Desenhar arestas entre pontos próximos
+      // 4. Desenhar arestas entre pontos próximos
       ctx.lineWidth = LINE_WIDTH
       for (let i = 0; i < points.length; i++) {
         for (let j = i + 1; j < points.length; j++) {
@@ -142,7 +166,7 @@ export function VoronoiBackground() {
         }
       }
 
-      // 4. Desenhar pontos nas posições atuais
+      // 5. Desenhar pontos nas posições atuais
       ctx.fillStyle = `rgba(180, 180, 180, ${DOT_OPACITY})`
       points.forEach((p) => {
         ctx.beginPath()
@@ -169,10 +193,14 @@ export function VoronoiBackground() {
     const frameId = requestAnimationFrame(() => {
       setSize()
       if (w <= 0 || h <= 0) return
+      initSymbolPos()
       initPoints()
       animRef.current = requestAnimationFrame(loop)
 
-      resizeObserver = new ResizeObserver(() => setSize())
+      resizeObserver = new ResizeObserver(() => {
+        setSize()
+        initSymbolPos()
+      })
       resizeObserver.observe(container)
     })
 
