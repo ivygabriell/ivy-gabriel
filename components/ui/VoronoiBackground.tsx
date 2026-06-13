@@ -19,6 +19,12 @@ const SYMBOL = '</>'
 const SYMBOL_OPACITY = 0.07
 const SYMBOL_SCALE = 0.30 // 30% da altura do canvas
 
+// Interatividade mobile
+const GYRO_STRENGTH = 0.4 // força do giroscópio (drift por frame)
+const GYRO_SMOOTH = 0.06 // suavização do movimento do giroscópio
+const TOUCH_RADIUS = 120 // raio de influência do toque
+const TOUCH_STRENGTH = 2.2 // força de repulsão do toque
+
 interface VPoint {
   bx: number // posição base x
   by: number // posição base y
@@ -35,6 +41,9 @@ export function VoronoiBackground() {
   const mouseRef = useRef({ x: -9999, y: -9999 })
   const pointsRef = useRef<VPoint[]>([])
   const symbolPosRef = useRef({ x: 0, y: 0, size: 0 })
+  const gyroRef = useRef({ x: 0, y: 0 })
+  const touchesRef = useRef<{ x: number; y: number }[]>([])
+  const gyroPermissionRef = useRef<'pending' | 'granted' | 'denied'>('pending')
   const reduceMotion = useReducedMotion()
 
   useEffect(() => {
@@ -48,6 +57,7 @@ export function VoronoiBackground() {
     if (!ctx) return
 
     const isMobile = !window.matchMedia('(hover: hover)').matches
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
     const count = isMobile ? POINT_COUNT_MOBILE : POINT_COUNT_DESKTOP
 
     let w = 0
@@ -149,6 +159,12 @@ export function VoronoiBackground() {
           p.bx += p.vx
           p.by += p.vy
 
+          // Giroscópio (mobile) — desloca a base na direção da inclinação
+          if (isMobile) {
+            p.bx += gyroRef.current.x * GYRO_STRENGTH
+            p.by += gyroRef.current.y * GYRO_STRENGTH
+          }
+
           // Bounce nas bordas (base)
           if (p.bx < 0 || p.bx > w) p.vx *= -1
           if (p.by < 0 || p.by > h) p.vy *= -1
@@ -158,6 +174,23 @@ export function VoronoiBackground() {
           // Lerp posição atual em direção à base
           p.cx += (p.bx - p.cx) * RETURN_SPEED
           p.cy += (p.by - p.cy) * RETURN_SPEED
+        }
+
+        // Toque (mobile) — repele os pontos ao redor de cada dedo.
+        // Empurra a posição renderizada (cx/cy); ao soltar, o lerp de
+        // retorno à base traz os pontos de volta ao fluxo normal.
+        if (isMobile && touchesRef.current.length > 0) {
+          touchesRef.current.forEach((touch) => {
+            const tdx = p.cx - touch.x
+            const tdy = p.cy - touch.y
+            const tdist = Math.sqrt(tdx * tdx + tdy * tdy)
+
+            if (tdist < TOUCH_RADIUS && tdist > 0) {
+              const force = (1 - tdist / TOUCH_RADIUS) * TOUCH_STRENGTH
+              p.cx += (tdx / tdist) * force
+              p.cy += (tdy / tdist) * force
+            }
+          })
         }
       })
 
@@ -207,6 +240,76 @@ export function VoronoiBackground() {
       mouseRef.current = { x: -9999, y: -9999 }
     }
 
+    // --- Giroscópio (mobile) ---
+    const onOrientation = (e: DeviceOrientationEvent) => {
+      if (!isMobile) return
+
+      // beta:  inclinação frente/trás | gamma: esquerda/direita
+      const beta = e.beta ?? 0
+      const gamma = e.gamma ?? 0
+
+      // Normalizar para -1 a 1 (beta neutro ≈ 45°, telefone em uso)
+      const normalX = Math.max(-1, Math.min(1, gamma / 45))
+      const normalY = Math.max(-1, Math.min(1, (beta - 45) / 45))
+
+      // Suavizar via lerp
+      gyroRef.current.x += (normalX - gyroRef.current.x) * GYRO_SMOOTH
+      gyroRef.current.y += (normalY - gyroRef.current.y) * GYRO_SMOOTH
+    }
+
+    const setupGyro = async () => {
+      if (!isMobile) return
+
+      type DOEWithPermission = typeof DeviceOrientationEvent & {
+        requestPermission?: () => Promise<'granted' | 'denied'>
+      }
+      const DOE = DeviceOrientationEvent as DOEWithPermission
+
+      // iOS 13+ exige permissão explícita; demais plataformas não
+      if (isIOS && typeof DOE.requestPermission === 'function') {
+        try {
+          const permission = await DOE.requestPermission()
+          if (permission === 'granted') {
+            gyroPermissionRef.current = 'granted'
+            window.addEventListener('deviceorientation', onOrientation)
+          } else {
+            gyroPermissionRef.current = 'denied'
+          }
+        } catch {
+          gyroPermissionRef.current = 'denied'
+        }
+      } else {
+        gyroPermissionRef.current = 'granted'
+        window.addEventListener('deviceorientation', onOrientation)
+      }
+    }
+
+    // --- Toque (mobile) ---
+    const updateTouches = (e: TouchEvent) => {
+      const rect = canvas.getBoundingClientRect()
+      touchesRef.current = Array.from(e.touches).map((t) => ({
+        x: t.clientX - rect.left,
+        y: t.clientY - rect.top,
+      }))
+    }
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (!isMobile) return
+      // iOS só concede a permissão do giroscópio sob gesto do usuário
+      if (gyroPermissionRef.current === 'pending') setupGyro()
+      updateTouches(e)
+    }
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (!isMobile) return
+      e.preventDefault() // evita scroll durante a interação no canvas
+      updateTouches(e)
+    }
+
+    const onTouchEnd = () => {
+      touchesRef.current = []
+    }
+
     // Aguarda o próximo frame para garantir dimensões reais do DOM
     const frameId = requestAnimationFrame(() => {
       setSize()
@@ -222,10 +325,19 @@ export function VoronoiBackground() {
       resizeObserver.observe(container)
     })
 
-    // Mobile: sem mouse tracking — apenas movimento autônomo
     if (!isMobile) {
+      // Desktop: rastreamento do mouse
       window.addEventListener('mousemove', onMouseMove, { passive: true })
       canvas.addEventListener('mouseleave', onMouseLeave)
+    } else {
+      // Mobile: giroscópio + toque.
+      // O container tem pointer-events:none — reabilitar no canvas para
+      // que os eventos de toque cheguem (o conteúdo z-10 continua acima).
+      canvas.style.pointerEvents = 'auto'
+      setupGyro()
+      canvas.addEventListener('touchstart', onTouchStart, { passive: true })
+      canvas.addEventListener('touchmove', onTouchMove, { passive: false })
+      canvas.addEventListener('touchend', onTouchEnd, { passive: true })
     }
 
     return () => {
@@ -234,6 +346,13 @@ export function VoronoiBackground() {
       resizeObserver?.disconnect()
       window.removeEventListener('mousemove', onMouseMove)
       canvas.removeEventListener('mouseleave', onMouseLeave)
+
+      if (isMobile) {
+        window.removeEventListener('deviceorientation', onOrientation)
+        canvas.removeEventListener('touchstart', onTouchStart)
+        canvas.removeEventListener('touchmove', onTouchMove)
+        canvas.removeEventListener('touchend', onTouchEnd)
+      }
     }
   }, [reduceMotion])
 
