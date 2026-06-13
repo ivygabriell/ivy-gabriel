@@ -5,31 +5,31 @@ import { useReducedMotion } from 'framer-motion'
 
 const WAVE_CONFIG = [
   {
-    opacity:   0.45,
-    color:     '180, 180, 200',
-    blur:      '1px',
+    opacity:   0.65,
+    color:     '190, 190, 210',
+    blur:      '0.8px',
     duration:  8000,
     amplitude: 40,
     offsetY:   0.35,
+    lineWidth: 1.8,
+  },
+  {
+    opacity:   0.42,
+    color:     '200, 200, 220',
+    blur:      '0.8px',
+    duration:  11000,
+    amplitude: 30,
+    offsetY:   0.55,
     lineWidth: 1.2,
   },
   {
     opacity:   0.28,
-    color:     '200, 200, 220',
-    blur:      '1px',
-    duration:  11000,
-    amplitude: 30,
-    offsetY:   0.55,
-    lineWidth: 0.8,
-  },
-  {
-    opacity:   0.18,
-    color:     '160, 160, 180',
+    color:     '170, 170, 190',
     blur:      '0.5px',
     duration:  14000,
     amplitude: 22,
     offsetY:   0.45,
-    lineWidth: 0.6,
+    lineWidth: 0.8,
   },
 ]
 
@@ -43,9 +43,12 @@ export function WaveDivider() {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const ratio = window.devicePixelRatio || 1
-    const W     = window.innerWidth
-    const H     = 180
+    const ratio     = window.devicePixelRatio || 1
+    const W         = window.innerWidth
+    const H         = 180
+    const isMobile  = W < 768
+    const lineScale  = isMobile ? 0.6 : Math.max(1, ratio * 0.9)
+    const alphaScale = isMobile ? 0.5 : 1.0
 
     canvas.width        = W * ratio
     canvas.height       = H * ratio
@@ -77,8 +80,8 @@ export function WaveDivider() {
         ctx.beginPath()
         ctx.moveTo(-20, baseY)
         ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, W + 20, baseY)
-        ctx.strokeStyle = `rgba(${wave.color}, ${wave.opacity})`
-        ctx.lineWidth   = wave.lineWidth
+        ctx.strokeStyle = `rgba(${wave.color}, ${wave.opacity * alphaScale})`
+        ctx.lineWidth   = wave.lineWidth * lineScale
         ctx.filter      = `blur(${wave.blur})`
         ctx.stroke()
         ctx.filter      = 'none'
