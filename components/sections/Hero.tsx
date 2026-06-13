@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, useReducedMotion } from 'framer-motion'
 import { cn } from '@/lib/utils'
-import { ParticleBackground } from '@/components/ui/ParticleBackground'
+// import { ParticleBackground } from '@/components/ui/ParticleBackground'
+// import { AuroraBackground } from '@/components/ui/AuroraBackground'
+import { VoronoiBackground } from '@/components/ui/VoronoiBackground'
 
 const HERO_LINE_1 = 'Não é a tecnologia que muda o seu negócio.'
 const HERO_LINE_2 = 'É quem está no comando dela.'
@@ -70,7 +72,9 @@ export function Hero() {
       aria-label="Apresentação"
       className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center overflow-hidden px-6 lg:px-12"
     >
-      <ParticleBackground />
+      {/* <ParticleBackground /> */}
+      {/* <AuroraBackground /> */}
+      <VoronoiBackground />
 
       <div className="relative z-10 mx-auto w-full max-w-content">
         {/* Label */}
