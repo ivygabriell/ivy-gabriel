@@ -186,7 +186,7 @@ export function Hero() {
 
           {/* CTAs + Sociais */}
           <motion.div
-            className="flex items-center gap-6 flex-wrap"
+            className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-wrap"
             initial={reduced ? {} : { opacity: 0, y: 10 }}
             animate={
               contentVisible
@@ -207,8 +207,8 @@ export function Hero() {
               Ver Projetos →
             </Link>
 
-            {/* Separador vertical */}
-            <div className="w-px h-5 bg-border flex-shrink-0" />
+            {/* Separador — só desktop */}
+            <div className="hidden sm:block w-px h-5 bg-border flex-shrink-0" />
 
             {/* Ícones sociais */}
             <div className="flex items-center gap-4">
