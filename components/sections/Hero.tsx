@@ -1,11 +1,17 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, useReducedMotion } from 'framer-motion'
 import { siGithub, siInstagram, siWhatsapp } from 'simple-icons'
 import { VoronoiBackground } from '@/components/ui/VoronoiBackground'
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1]
+
+const LABEL_FULL = 'Olá, me chamo'
+const TYPING_SPEED = 60
+
+type HeroPhase = 'label' | 'name' | 'content' | 'done'
 
 // simple-icons removeu o LinkedIn (v16) — path oficial mantido inline
 const LINKEDIN_PATH =
@@ -35,15 +41,73 @@ const socialLinks = [
 ]
 
 export function Hero() {
-  const reduceMotion = useReducedMotion()
+  const reduced = useReducedMotion()
+  const [phase, setPhase] = useState<HeroPhase>('label')
+  const [labelText, setLabelText] = useState('')
+  const [showCursor, setShowCursor] = useState(true)
 
-  // Entrada em sequência (stagger) — anima apenas na montagem
-  const enter = (delay: number) => ({
-    initial: reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 },
-    animate: { opacity: 1, y: 0 },
+  // Reduced motion — tudo visível instantaneamente, sem sequência
+  useEffect(() => {
+    if (!reduced) return
+    setLabelText(LABEL_FULL)
+    setShowCursor(false)
+    setPhase('done')
+  }, [reduced])
+
+  // 1. Typewriter da label "Olá, me chamo"
+  useEffect(() => {
+    if (reduced || phase !== 'label') return
+
+    let i = 0
+    const interval = setInterval(() => {
+      i++
+      setLabelText(LABEL_FULL.slice(0, i))
+      if (i >= LABEL_FULL.length) {
+        clearInterval(interval)
+        // Pequena pausa antes de avançar
+        setTimeout(() => {
+          setShowCursor(false)
+          setPhase('name')
+        }, 400)
+      }
+    }, TYPING_SPEED)
+
+    return () => clearInterval(interval)
+  }, [reduced, phase])
+
+  // 2. Cursor piscante durante o typewriter
+  useEffect(() => {
+    if (reduced || phase !== 'label') return
+    const interval = setInterval(() => {
+      setShowCursor((v) => !v)
+    }, 530)
+    return () => clearInterval(interval)
+  }, [reduced, phase])
+
+  // 3. Avançar de name para content (após a animação de blur do nome)
+  useEffect(() => {
+    if (phase !== 'name') return
+    const timer = setTimeout(() => setPhase('content'), 900)
+    return () => clearTimeout(timer)
+  }, [phase])
+
+  // 4. Avançar de content para done (700ms base + 4 × 150ms stagger)
+  useEffect(() => {
+    if (phase !== 'content') return
+    const timer = setTimeout(() => setPhase('done'), 1300)
+    return () => clearTimeout(timer)
+  }, [phase])
+
+  const nameVisible = phase === 'name' || phase === 'content' || phase === 'done'
+  const contentVisible = phase === 'content' || phase === 'done'
+
+  // Entrada em sequência do bloco de conteúdo — stagger por índice
+  const contentEnter = (index: number) => ({
+    initial: reduced ? {} : { opacity: 0, y: 10 },
+    animate: contentVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 },
     transition: {
-      duration: reduceMotion ? 0 : 0.7,
-      delay: reduceMotion ? 0 : delay,
+      duration: reduced ? 0 : 0.7,
+      delay: reduced ? 0 : index * 0.15,
       ease: EASE,
     },
   })
@@ -58,27 +122,51 @@ export function Hero() {
       <div className="relative z-10 mx-auto flex min-h-[calc(100vh-4rem)] max-w-content items-center px-6 lg:px-12">
         {/* Coluna esquerda */}
         <div className="flex w-full flex-col gap-6 py-20 md:w-[60%]">
-          {/* Label */}
+          {/* Label — typewriter */}
           <motion.p
-            {...enter(0.1)}
+            aria-live="polite"
             className="font-mono text-caption uppercase tracking-[0.2em]"
             style={{ color: '#F0F0FF' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
           >
-            Olá, me chamo
+            {labelText}
+            {phase === 'label' && (
+              <span
+                aria-hidden="true"
+                style={{
+                  display: 'inline-block',
+                  width: '2px',
+                  height: '0.8em',
+                  background: '#F0F0FF',
+                  marginLeft: '2px',
+                  verticalAlign: 'middle',
+                  opacity: showCursor ? 1 : 0,
+                  transition: 'opacity 0.1s',
+                }}
+              />
+            )}
           </motion.p>
 
-          {/* Nome */}
+          {/* Nome — blur → sharp */}
           <motion.h1
-            {...enter(0.2)}
             className="font-display font-black leading-[0.95] tracking-[-0.03em] text-text-primary"
             style={{ fontSize: 'clamp(56px, 8vw, 96px)' }}
+            initial={reduced ? {} : { opacity: 0, filter: 'blur(12px)' }}
+            animate={
+              nameVisible
+                ? { opacity: 1, filter: 'blur(0px)' }
+                : { opacity: 0, filter: 'blur(12px)' }
+            }
+            transition={{ duration: reduced ? 0 : 0.9, ease: EASE }}
           >
             Ivy Gabriel
           </motion.h1>
 
           {/* Subtítulo */}
           <motion.p
-            {...enter(0.32)}
+            {...contentEnter(0)}
             className="font-display font-semibold text-silver"
             style={{ fontSize: 'clamp(18px, 2.5vw, 28px)', letterSpacing: '-0.01em' }}
           >
@@ -87,7 +175,7 @@ export function Hero() {
 
           {/* Parágrafo */}
           <motion.p
-            {...enter(0.44)}
+            {...contentEnter(1)}
             className="max-w-[480px] font-body leading-relaxed text-text-secondary"
             style={{ fontSize: '15px' }}
           >
@@ -98,7 +186,7 @@ export function Hero() {
 
           {/* CTAs */}
           <motion.div
-            {...enter(0.56)}
+            {...contentEnter(2)}
             className="flex flex-wrap items-center gap-4"
           >
             <Link
@@ -112,7 +200,7 @@ export function Hero() {
 
           {/* Sociais */}
           <motion.div
-            {...enter(0.68)}
+            {...contentEnter(3)}
             className="flex items-center gap-5"
           >
             {socialLinks.map((social) => (
