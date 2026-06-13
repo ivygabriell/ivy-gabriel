@@ -6,13 +6,14 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
 const navLinks = [
+  { href: '/',         label: 'Início'   },
   { href: '/projetos', label: 'Projetos' },
   { href: '/sobre',    label: 'Sobre'    },
   { href: '/contato',  label: 'Contato'  },
 ]
 
 export function Navbar() {
-  const pathname = usePathname()
+  const pathname                = usePathname()
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -26,92 +27,124 @@ export function Navbar() {
     setMenuOpen(false)
   }, [pathname])
 
-  return (
-    <header
-      className={cn(
-        'fixed top-0 left-0 right-0 z-50',
-        'transition-all duration-500 ease-smooth',
-        scrolled
-          ? 'bg-void/90 backdrop-blur-sm border-b border-border'
-          : 'bg-transparent'
-      )}
-    >
-      <nav className="max-w-content mx-auto px-6 lg:px-12 h-16 flex items-center justify-between">
+  const isActive = (href: string) => {
+    if (href === '/') return pathname === '/'
+    return pathname.startsWith(href)
+  }
 
-        {/* Logo */}
+  return (
+    <header className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 px-4">
+
+      {/* Container flutuante */}
+      <div
+        className={cn(
+          'flex items-center gap-2',
+          'rounded-full border border-border',
+          'px-2 py-2',
+          'transition-all duration-500 ease-smooth',
+          scrolled
+            ? 'bg-void/90 backdrop-blur-md border-border'
+            : 'bg-void/70 backdrop-blur-sm border-border'
+        )}
+      >
+        {/* Iniciais IG */}
         <Link
           href="/"
           className={cn(
-            'font-display font-black text-sm tracking-[0.08em]',
-            'text-text-primary hover:text-chrome',
-            'transition-colors duration-300'
+            'flex items-center justify-center',
+            'w-9 h-9 rounded-full',
+            'bg-elevated border border-border',
+            'font-display font-black text-[13px]',
+            'tracking-[0.05em] text-text-primary',
+            'hover:text-chrome hover:border-border-strong',
+            'transition-all duration-300',
+            'flex-shrink-0'
           )}
         >
-          IVY GABRIEL
+          IG
         </Link>
 
+        {/* Separador */}
+        <div className="w-px h-5 bg-border mx-1 flex-shrink-0" />
+
         {/* Links — desktop */}
-        <div className="hidden md:flex items-center gap-10">
+        <nav className="hidden md:flex items-center gap-1" aria-label="Navegação principal">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                'font-body text-[12px] tracking-[0.06em]',
-                'transition-colors duration-300',
-                pathname.startsWith(link.href)
-                  ? 'text-text-primary'
+                'px-4 py-1.5 rounded-full',
+                'font-body text-[12px] tracking-[0.04em]',
+                'transition-all duration-300',
+                isActive(link.href)
+                  ? 'bg-elevated border border-border text-text-primary'
                   : 'text-text-secondary hover:text-silver'
               )}
             >
               {link.label}
             </Link>
           ))}
-        </div>
+        </nav>
 
-        {/* Badge Disponível */}
-        <div className="hidden md:flex items-center">
-          <span
-            className={cn(
-              'flex items-center gap-2',
-              'border border-border px-4 py-2',
-              'font-mono text-[11px] tracking-[0.1em] text-silver',
-              'hover:border-border-strong hover:text-chrome',
-              'transition-all duration-300'
-            )}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-silver animate-pulse" />
-            Disponível
-          </span>
-        </div>
+        {/* Separador */}
+        <div className="hidden md:block w-px h-5 bg-border mx-1 flex-shrink-0" />
+
+        {/* Botão de idioma */}
+        <button
+          className={cn(
+            'hidden md:flex items-center justify-center',
+            'w-9 h-9 rounded-full',
+            'border border-border',
+            'font-mono text-[10px] tracking-[0.08em]',
+            'text-text-secondary',
+            'hover:text-silver hover:border-border-strong',
+            'transition-all duration-300',
+            'flex-shrink-0'
+          )}
+          aria-label="Mudar idioma"
+          title="Em breve: EN / PT"
+        >
+          PT
+        </button>
 
         {/* Botão mobile */}
         <button
           className={cn(
-            'md:hidden font-mono text-[11px] tracking-[0.1em]',
-            'text-text-secondary hover:text-text-primary',
-            'transition-colors duration-300'
+            'md:hidden flex items-center justify-center',
+            'w-9 h-9 rounded-full border border-border',
+            'font-mono text-[10px] text-text-secondary',
+            'hover:text-silver transition-colors duration-300'
           )}
           onClick={() => setMenuOpen((prev) => !prev)}
           aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
           aria-expanded={menuOpen}
         >
-          {menuOpen ? '✕ fechar' : '☰ menu'}
+          {menuOpen ? '✕' : '☰'}
         </button>
-      </nav>
+      </div>
 
-      {/* Menu mobile */}
+      {/* Menu mobile — dropdown abaixo do container */}
       {menuOpen && (
-        <div className="md:hidden bg-surface border-t border-border px-6 py-8 flex flex-col gap-6">
+        <div
+          className={cn(
+            'absolute top-[72px] left-4 right-4',
+            'bg-void/95 backdrop-blur-md',
+            'border border-border rounded-2xl',
+            'px-4 py-4 flex flex-col gap-2',
+            'md:hidden'
+          )}
+        >
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                'font-body text-[14px] tracking-[0.04em]',
-                'transition-colors duration-300',
-                pathname.startsWith(link.href)
-                  ? 'text-text-primary'
+                'px-4 py-2.5 rounded-xl',
+                'font-body text-[14px]',
+                'transition-all duration-300',
+                isActive(link.href)
+                  ? 'bg-elevated text-text-primary'
                   : 'text-text-secondary'
               )}
             >
@@ -119,11 +152,11 @@ export function Navbar() {
             </Link>
           ))}
 
-          <div className="flex items-center gap-2 pt-2 border-t border-border">
-            <span className="w-1.5 h-1.5 rounded-full bg-silver animate-pulse" />
-            <span className="font-mono text-[11px] tracking-[0.1em] text-silver">
+          <div className="border-t border-border mt-2 pt-3 flex items-center justify-between px-4">
+            <span className="font-mono text-[10px] text-text-secondary tracking-[0.08em]">
               Disponível
             </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-silver animate-pulse" />
           </div>
         </div>
       )}

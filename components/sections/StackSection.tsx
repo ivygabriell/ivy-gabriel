@@ -64,7 +64,7 @@ const categories = [
 
 export function StackSection() {
   return (
-    <section aria-label="Stack técnica" className="border-t border-border">
+    <section aria-label="Stack técnica" className="">
       <div className="mx-auto max-w-content px-6 py-section-sm lg:px-12">
         <p className={cn(
           'mb-12 font-mono text-caption uppercase',

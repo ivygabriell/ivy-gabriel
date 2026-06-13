@@ -16,7 +16,7 @@ const DOT_RADIUS = 1.2 // raio dos pontos nas interseções
 const DOT_OPACITY = 0.18 // opacidade dos pontos
 
 const SYMBOL = '</>'
-const SYMBOL_OPACITY = 0.055
+const SYMBOL_OPACITY = 0.07
 const SYMBOL_SCALE = 0.30 // 30% da altura do canvas
 
 interface VPoint {
@@ -96,19 +96,37 @@ export function VoronoiBackground() {
       }
     }
 
+    let time = 0
     const loop = () => {
+      time++
+
       // 1. Fade suave para criar profundidade
       ctx.fillStyle = 'rgba(8, 8, 8, 0.35)'
       ctx.fillRect(0, 0, w, h)
 
-      // 2. </> grande estático — atrás do Voronoi
-      const { x: sx, y: sy, size: sSize } = symbolPosRef.current
+      // 2. </> grande — atrás do Voronoi, distorce com o scroll
+      const scrollProgress = Math.min(window.scrollY / window.innerHeight, 1)
+      const skewAmount = scrollProgress * 65 // graus
+      const scaleYAmount = 1 - scrollProgress * 0.72
+
+      const pulse = 0.5 + 0.5 * Math.sin(time * 0.018)
+      const symbolAlpha = 0.04 + pulse * 0.06
+
       ctx.save()
-      ctx.font = `bold ${sSize}px "JetBrains Mono", monospace`
+      ctx.translate(symbolPosRef.current.x, symbolPosRef.current.y)
+      ctx.transform(
+        1, // scaleX
+        Math.tan((skewAmount * Math.PI) / 180), // skewY
+        Math.tan((skewAmount * Math.PI) / 180), // skewX
+        scaleYAmount, // scaleY
+        0,
+        0
+      )
+      ctx.fillStyle = `rgba(240, 240, 255, ${symbolAlpha})`
+      ctx.font = `bold ${symbolPosRef.current.size}px "JetBrains Mono", monospace`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      ctx.fillStyle = `rgba(180, 180, 180, ${SYMBOL_OPACITY})`
-      ctx.fillText(SYMBOL, sx, sy)
+      ctx.fillText(SYMBOL, 0, 0) // 0,0 porque já foi translate
       ctx.restore()
 
       const mouse = mouseRef.current

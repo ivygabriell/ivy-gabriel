@@ -1,4 +1,5 @@
 import { Hero } from '@/components/sections/Hero'
+import { WaveDivider } from '@/components/ui/WaveDivider'
 import { StackSection } from '@/components/sections/StackSection'
 import { WorkPreview } from '@/components/sections/WorkPreview'
 import { Reconhecimentos } from '@/components/sections/Reconhecimentos'
@@ -9,6 +10,7 @@ export default function Home() {
   return (
     <>
       <Hero />
+      <WaveDivider />
       <StackSection />
       <WorkPreview />
       <Reconhecimentos />

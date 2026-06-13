@@ -1,159 +1,145 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, useReducedMotion } from 'framer-motion'
-import { cn } from '@/lib/utils'
-// import { ParticleBackground } from '@/components/ui/ParticleBackground'
-// import { AuroraBackground } from '@/components/ui/AuroraBackground'
+import { siGithub, siInstagram, siWhatsapp } from 'simple-icons'
 import { VoronoiBackground } from '@/components/ui/VoronoiBackground'
-
-const HERO_LINE_1 = 'Não é a tecnologia que muda o seu negócio.'
-const HERO_LINE_2 = 'É quem está no comando dela.'
-const TYPING_SPEED = 48
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1]
 
-type Phase = 'idle' | 'line1' | 'typing' | 'done'
+// simple-icons removeu o LinkedIn (v16) — path oficial mantido inline
+const LINKEDIN_PATH =
+  'M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z'
+
+const socialLinks = [
+  {
+    path: siGithub.path,
+    href: 'https://github.com/ivygabriell',
+    label: 'GitHub',
+  },
+  {
+    path: LINKEDIN_PATH,
+    href: 'https://www.linkedin.com/in/ivygabriel/',
+    label: 'LinkedIn',
+  },
+  {
+    path: siInstagram.path,
+    href: 'https://www.instagram.com/ivygabriell_/',
+    label: 'Instagram',
+  },
+  {
+    path: siWhatsapp.path,
+    href: 'https://wa.me/5562995024778',
+    label: 'WhatsApp',
+  },
+]
 
 export function Hero() {
   const reduceMotion = useReducedMotion()
-  const [phase, setPhase] = useState<Phase>('idle')
-  const [typed, setTyped] = useState('')
-  const [cursorVisible, setCursorVisible] = useState(true)
 
-  // Orquestração das fases
-  useEffect(() => {
-    if (reduceMotion) return
-
-    const toLine1 = setTimeout(() => setPhase('line1'), 400)
-    const toTyping = setTimeout(() => setPhase('typing'), 1500)
-
-    return () => {
-      clearTimeout(toLine1)
-      clearTimeout(toTyping)
-    }
-  }, [reduceMotion])
-
-  // Typewriter da linha 2 — 48ms por caractere
-  useEffect(() => {
-    if (phase !== 'typing') return
-
-    if (typed.length < HERO_LINE_2.length) {
-      const next = setTimeout(() => {
-        setTyped(HERO_LINE_2.slice(0, typed.length + 1))
-      }, TYPING_SPEED)
-      return () => clearTimeout(next)
-    }
-
-    const finish = setTimeout(() => setPhase('done'), 300)
-    return () => clearTimeout(finish)
-  }, [phase, typed])
-
-  // Piscar do cursor durante a digitação
-  useEffect(() => {
-    if (phase !== 'typing') return
-
-    const blink = setInterval(() => {
-      setCursorVisible((v) => !v)
-    }, 530)
-
-    return () => clearInterval(blink)
-  }, [phase])
-
-  // Estados derivados — sob reduced motion tudo já nasce no estado final
-  const showLine1 = reduceMotion || phase !== 'idle'
-  const showDone = reduceMotion || phase === 'done'
-  const line2Text = reduceMotion ? HERO_LINE_2 : typed
-  const showCursor = !reduceMotion && phase === 'typing'
+  // Entrada em sequência (stagger) — anima apenas na montagem
+  const enter = (delay: number) => ({
+    initial: reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 },
+    animate: { opacity: 1, y: 0 },
+    transition: {
+      duration: reduceMotion ? 0 : 0.7,
+      delay: reduceMotion ? 0 : delay,
+      ease: EASE,
+    },
+  })
 
   return (
     <section
       aria-label="Apresentação"
-      className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center overflow-hidden px-6 lg:px-12"
+      className="relative min-h-[calc(100vh-4rem)] overflow-hidden"
     >
-      {/* <ParticleBackground /> */}
-      {/* <AuroraBackground /> */}
       <VoronoiBackground />
 
-      <div className="relative z-10 mx-auto w-full max-w-content">
-        {/* Label */}
-        <motion.p
-          initial={reduceMotion ? false : { opacity: 0 }}
-          animate={{ opacity: showLine1 ? 1 : 0 }}
-          transition={{ duration: reduceMotion ? 0 : 0.9, ease: EASE }}
-          className="mb-6 font-mono text-caption uppercase tracking-[0.2em] text-text-secondary"
-        >
-          Full Stack Developer
-        </motion.p>
-
-        {/* Headlines */}
-        <div className="space-y-1">
-          <motion.h1
-            initial={
-              reduceMotion ? false : { opacity: 0, y: 6, filter: 'blur(8px)' }
-            }
-            animate={{
-              opacity: showLine1 ? 1 : 0,
-              y: showLine1 ? 0 : 6,
-              filter: showLine1 ? 'blur(0px)' : 'blur(8px)',
-            }}
-            transition={{ duration: reduceMotion ? 0 : 0.9, ease: EASE }}
-            className="text-hero font-display text-text-muted"
+      <div className="relative z-10 mx-auto flex min-h-[calc(100vh-4rem)] max-w-content items-center px-6 lg:px-12">
+        {/* Coluna esquerda */}
+        <div className="flex w-full flex-col gap-6 py-20 md:w-[60%]">
+          {/* Label */}
+          <motion.p
+            {...enter(0.1)}
+            className="font-mono text-caption uppercase tracking-[0.2em]"
+            style={{ color: '#F0F0FF' }}
           >
-            {HERO_LINE_1}
+            Olá, me chamo
+          </motion.p>
+
+          {/* Nome */}
+          <motion.h1
+            {...enter(0.2)}
+            className="font-display font-black leading-[0.95] tracking-[-0.03em] text-text-primary"
+            style={{ fontSize: 'clamp(56px, 8vw, 96px)' }}
+          >
+            Ivy Gabriel
           </motion.h1>
 
-          <div
-            role="status"
-            aria-live="polite"
-            className="min-h-[1.1em] text-hero font-display chrome-text"
+          {/* Subtítulo */}
+          <motion.p
+            {...enter(0.32)}
+            className="font-display font-semibold text-silver"
+            style={{ fontSize: 'clamp(18px, 2.5vw, 28px)', letterSpacing: '-0.01em' }}
           >
-            {line2Text}
-            {showCursor && (
-              <span
-                aria-hidden="true"
-                className={cn(
-                  'relative top-[-1px] ml-px inline-block h-[0.75em] w-[3px] bg-chrome align-middle transition-opacity duration-100',
-                  cursorVisible ? 'opacity-100' : 'opacity-0'
-                )}
-              />
-            )}
-          </div>
-        </div>
+            Full Stack Developer & Mobile
+          </motion.p>
 
-        {/* CTA */}
-        <motion.div
-          initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-          animate={{ opacity: showDone ? 1 : 0, y: showDone ? 0 : 8 }}
-          transition={{ duration: reduceMotion ? 0 : 0.6, ease: EASE }}
-          className="mt-12"
-        >
-          <Link
-            href="/projetos"
-            className="group inline-flex items-center gap-3 border border-border px-8 py-4 font-mono text-[12px] tracking-[0.1em] text-silver transition-colors duration-300 ease-smooth hover:border-border-strong hover:text-chrome"
+          {/* Parágrafo */}
+          <motion.p
+            {...enter(0.44)}
+            className="max-w-[480px] font-body leading-relaxed text-text-secondary"
+            style={{ fontSize: '15px' }}
           >
-            Ver projetos
-            <span
-              aria-hidden="true"
-              className="transition-transform duration-300 group-hover:translate-x-1"
+            Transformando ideias em produtos digitais escaláveis. Focado em
+            performance, interfaces premium e arquiteturas que crescem junto com
+            o negócio.
+          </motion.p>
+
+          {/* CTAs */}
+          <motion.div
+            {...enter(0.56)}
+            className="flex flex-wrap items-center gap-4"
+          >
+            <Link
+              href="/projetos"
+              className="border border-silver px-8 py-3.5 font-mono text-[12px] tracking-[0.1em] text-silver transition-all duration-300 hover:border-chrome hover:text-chrome"
             >
-              →
-            </span>
-          </Link>
-        </motion.div>
+              Ver Projetos →
+            </Link>
+
+          </motion.div>
+
+          {/* Sociais */}
+          <motion.div
+            {...enter(0.68)}
+            className="flex items-center gap-5"
+          >
+            {socialLinks.map((social) => (
+              <Link
+                key={social.label}
+                href={social.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={social.label}
+                className="text-text-secondary transition-colors duration-300 hover:text-silver"
+              >
+                <svg
+                  role="img"
+                  viewBox="0 0 24 24"
+                  width={18}
+                  height={18}
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path d={social.path} />
+                </svg>
+              </Link>
+            ))}
+          </motion.div>
+        </div>
       </div>
 
-      {/* Localização */}
-      <motion.div
-        aria-hidden="true"
-        initial={reduceMotion ? false : { opacity: 0 }}
-        animate={{ opacity: showDone ? 0.35 : 0 }}
-        transition={{ duration: reduceMotion ? 0 : 0.8, ease: EASE }}
-        className="absolute bottom-8 right-6 z-10 font-mono text-caption text-text-secondary lg:right-12"
-      >
-        Anápolis, GO — 2026
-      </motion.div>
     </section>
   )
 }
